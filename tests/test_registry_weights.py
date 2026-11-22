@@ -181,6 +181,36 @@ def test_corrupted_local_file_is_detected_and_replaced(tmp_path, server):
     assert sha256_file(target) == DIGEST
 
 
+def test_failed_check_ends_the_trust_in_an_earlier_verification(tmp_path, server):
+    """Same size and same modification time, different content: what a quick check cannot see.
+
+    (On file systems with a coarse clock a file rewritten at once keeps its modification time; here
+    the time is put back explicitly so that the case is the same on every system.)
+    """
+
+    import os
+
+    info = info_for([weight(server)])
+    spec = info.variant(None).weights[0]
+    manager = WeightsManager(tmp_path)
+    manager.ensure(info, info.variant(None), download=True)
+    target = tmp_path / "toy" / "weights.bin"
+    marker = target.with_name(target.name + ".verified.json")
+    assert marker.is_file()
+    before = target.stat()
+    damaged = bytearray(PAYLOAD)
+    damaged[4321] ^= 0x01
+    target.write_bytes(bytes(damaged))
+    os.utime(target, ns=(before.st_atime_ns, before.st_mtime_ns))
+    assert manager.check_file("toy", spec)["ok"]                    # the quick check still trusts the marker
+    status = manager.check_file("toy", spec, full=True)             # e.g. "models verify"
+    assert not status["ok"] and "SHA-256 mismatch" in status["detail"]
+    assert not marker.exists()                                      # ... and now nothing does any more
+    assert not manager.check_file("toy", spec)["ok"]
+    manager.ensure(info, info.variant(None), download=True)
+    assert sha256_file(target) == DIGEST
+
+
 def test_download_can_be_cancelled(tmp_path, server):
     token = CancelToken()
     token.cancel()

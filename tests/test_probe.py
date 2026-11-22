@@ -1061,6 +1061,23 @@ def test_truncated_mp4_with_leading_index_is_read_up_to_the_cut(derived, tmp_pat
     assert any("36" in w for w in meta.warnings) and any("truncated" in w for w in meta.warnings)
 
 
+def test_truncated_mp4_cut_between_two_frames_is_called_truncated(derived, tmp_path):
+    # Where the cut falls depends on how the muxer laid the file out.  When it falls exactly between
+    # two packets no packet is damaged, and the missing frames are the only sign of the truncation.
+    whole = derived.path("faststart.mp4")
+    with av.open(str(whole)) as container:
+        stream = container.streams.video[0]
+        ends = sorted(p.pos + p.size for p in container.demux(stream) if p.size and p.pos is not None and p.pos >= 0)
+    assert len(ends) == 36
+    path = tmp_path / "cut_between.mp4"
+    path.write_bytes(whole.read_bytes()[: ends[20]])               # ends with a complete video packet
+    meta = probe(path).metadata
+    assert meta.video.nb_frames == 36 and 0 < meta.frame_count < 36
+    assert any("36" in w for w in meta.warnings) and any("truncated" in w for w in meta.warnings)
+    if not any(p["corrupt"] for p in av_packets(path)):
+        assert any("36" in w and "probably truncated" in w for w in meta.warnings)
+
+
 def av_packets(path: Path) -> List[dict]:
     """Video packets as PyAV demuxes them (reference for flags that ffprobe does not print)."""
 

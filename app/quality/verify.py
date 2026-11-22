@@ -171,6 +171,20 @@ def _timeline_from(pts: np.ndarray, time_base: Fraction) -> FrameTimeline:
     return FrameTimeline(time_base, np.asarray(pts, dtype=np.int64), np.zeros(n, np.int64), np.zeros(n, bool))
 
 
+def _time_step(container: Optional[str], time_base: Fraction) -> Fraction:
+    """The step in which the output container really counts time.
+
+    Normally that is the time base of the video stream.  Matroska and WebM store timestamps in
+    milliseconds whatever time base a demuxer reports for the stream (FFmpeg versions differ in
+    what they report), so their step is never finer than one millisecond.
+    """
+
+    step = Fraction(time_base)
+    if container in ("mkv", "webm"):
+        return max(step, Fraction(1, 1000))
+    return step
+
+
 def _duration_tolerance(reference: FrameTimeline, src_tb: Fraction, out_tb: Fraction) -> Fraction:
     """How far the video duration of the output may differ from that of the source.
 
@@ -527,10 +541,11 @@ def verify_output(
             put("timestamps", SKIPPED, "Not compared because the frame counts differ.")
             return
         out_tb = Fraction(ov.time_base)
+        out_step = _time_step(om.container, out_tb)
         out_times = [Fraction(int(p)) * out_tb for p in timeline.pts]
         src_times = [Fraction(int(p)) * src_tb for p in src_pts]
         offset = out_times[0] - src_times[0]
-        tolerance = max(out_tb, src_tb) / 2
+        tolerance = max(out_step, src_tb) / 2
         worst, worst_index = Fraction(0), 0
         for index, (a, b) in enumerate(zip(out_times, src_times)):
             deviation = abs(a - b - offset)
@@ -545,7 +560,7 @@ def verify_output(
         elif data.time_shift != 0:
             shifted = f" A start offset of {_ms(-data.time_shift)} ms common to all source streams was removed."
         if worst <= tolerance:
-            exact = "exactly" if worst == 0 else f"within {_ms(worst)} ms (the container counts in {_ms(out_tb)} ms steps)"
+            exact = "exactly" if worst == 0 else f"within {_ms(worst)} ms (the container counts in {_ms(out_step)} ms steps)"
             put("timestamps", PASS, f"All {expected_frames} frame times match the source {exact}.{shifted}",
                 {"max_deviation_ms": 0.0}, measured)
         else:
@@ -562,7 +577,7 @@ def verify_output(
             put("frame_rate", SKIPPED, "The frame rate could not be measured.")
             return
         span = max(Fraction(1, 1000), reference.duration)
-        allowed = max(1e-6, float((Fraction(ov.time_base) + src_tb) / span))
+        allowed = max(1e-6, float((_time_step(om.container, Fraction(ov.time_base)) + src_tb) / span))
         relative = abs(float(got) - float(want)) / float(want)
         mode_want, mode_got = reference.is_vfr, timeline.is_vfr
         measured = {"fps": round(float(got), 6), "variable": mode_got}
@@ -583,7 +598,7 @@ def verify_output(
             return
         reference = _timeline_from(src_pts, src_tb)
         want, got = reference.duration, timeline.duration
-        allowed = _duration_tolerance(reference, src_tb, Fraction(ov.time_base))
+        allowed = _duration_tolerance(reference, src_tb, _time_step(om.container, Fraction(ov.time_base)))
         measured, expected = round(float(got), 6), round(float(want), 6)
         if abs(got - want) <= allowed:
             put("duration", PASS, f"{float(got):.3f} s of video, as in the " +
@@ -1004,7 +1019,8 @@ def _comparison(
         partial)
     src_duration = float(source.video_duration or 0)
     out_duration = float(om.video_duration or 0)
-    slack = float(_duration_tolerance(reference, src_tb, Fraction(ov.time_base))) if reference is not None else 0.05
+    slack = (float(_duration_tolerance(reference, src_tb, _time_step(om.container, Fraction(ov.time_base))))
+             if reference is not None else 0.05)
     row("Duration", f"{src_duration:.3f} s", f"{out_duration:.3f} s",
         None if data.truncated else abs(src_duration - out_duration) <= slack + 0.002, partial)
     row("Start time", f"{float(sv.start_time or 0):.4f} s", f"{float(ov.start_time or 0):.4f} s", None)

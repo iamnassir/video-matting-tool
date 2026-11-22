@@ -50,6 +50,23 @@ def run(app_settings, clip, out: Path, **overrides):
     return MattingPipeline(app_settings).run(clip.path, out, make_config(**overrides))
 
 
+def test_matroska_time_step_does_not_depend_on_the_reported_time_base():
+    """Matroska and WebM count in milliseconds whatever time base a demuxer reports for the stream."""
+
+    from fractions import Fraction
+
+    from app.quality.verify import _time_step
+
+    ms = Fraction(1, 1000)
+    for container in ("mkv", "webm"):
+        assert _time_step(container, ms) == ms
+        assert _time_step(container, Fraction(1, 1_000_000_000)) == ms      # finer than the stored step
+        assert _time_step(container, Fraction(1, 30000)) == ms
+        assert _time_step(container, Fraction(1, 25)) == Fraction(1, 25)     # coarser: taken as it is
+    for container in ("mp4", "mov", "other", None):
+        assert _time_step(container, Fraction(1, 30000)) == Fraction(1, 30000)
+
+
 def code_values(fmt_name: str, width: int, height: int, rgb=(0, 255, 0), color: ColorInfo = ColorInfo(), full_range_hint=None):
     """Exact code values of a background colour for a stream with the given tags."""
 

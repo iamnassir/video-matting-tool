@@ -1409,9 +1409,13 @@ def probe(path: Any, *, ffprobe: Optional[str] = None, scan_timeline: bool = Tru
         vfr_stats = timeline.vfr_stats()
         if nb_frames is not None and nb_frames != frame_count:
             hidden = f" ({scan.discarded} hidden by an edit list)" if scan.discarded else ""
+            # Frames that are listed but neither readable nor hidden: the data ends before the index
+            # does.  (When a packet was cut in half, the damaged-packet warning already says so.)
+            cut_short = nb_frames > frame_count + scan.discarded and not scan.damaged_packets
             warnings.append(
                 f"The container declares {nb_frames} video frames but {frame_count} are presented{hidden}; "
                 "the presented frames are processed."
+                + (" The file is probably truncated or was not copied completely." if cut_short else "")
             )
         warnings.extend(scan_warnings)
         if stream_duration is not None and video_duration is not None and frame_count > 1:

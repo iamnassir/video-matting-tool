@@ -93,19 +93,39 @@ class WeightsManager:
         try:
             data = json.loads(marker.read_text(encoding="utf-8"))
             st = path.stat()
+            if "mtime_ns" in data:
+                same_time = int(data["mtime_ns"]) == st.st_mtime_ns
+            else:                                   # marker written by an earlier version
+                same_time = abs(float(data.get("mtime", -1)) - st.st_mtime) < 1e-3
             return (
                 data.get("size") == st.st_size
-                and abs(float(data.get("mtime", -1)) - st.st_mtime) < 1e-3
+                and same_time
                 and (weight.sha256 is None or data.get("sha256") == weight.sha256.lower())
             )
         except Exception:
             return False
 
+    def _drop_marker(self, path: Path) -> None:
+        """Forget that *path* was verified (called as soon as a check of it fails).
+
+        Size and modification time alone cannot prove that a file is unchanged: a file rewritten
+        within one tick of the file system's clock keeps both.  Once a check has failed, nothing
+        may fall back on the old marker.
+        """
+
+        try:
+            self._marker(path).unlink()
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            log.debug("could not remove verification marker for %s: %s", path, exc)
+
     def _write_marker(self, path: Path, digest: Optional[str]) -> None:
         try:
             st = path.stat()
             self._marker(path).write_text(
-                json.dumps({"size": st.st_size, "mtime": st.st_mtime, "sha256": digest}), encoding="utf-8"
+                json.dumps({"size": st.st_size, "mtime": st.st_mtime, "mtime_ns": st.st_mtime_ns, "sha256": digest}),
+                encoding="utf-8",
             )
         except OSError as exc:  # marker is an optimisation only
             log.debug("could not write verification marker for %s: %s", path, exc)
@@ -134,6 +154,7 @@ class WeightsManager:
         size = path.stat().st_size
         info["bytes"] = size
         if w.size_bytes is not None and size != w.size_bytes:
+            self._drop_marker(path)
             info["detail"] = f"size mismatch: {size} bytes on disk, expected {w.size_bytes}"
             return info
         if w.sha256 is None:
@@ -146,6 +167,7 @@ class WeightsManager:
             return info
         digest = sha256_file(path)
         if digest.lower() != w.sha256.lower():
+            self._drop_marker(path)
             info["detail"] = f"SHA-256 mismatch: {digest} (expected {w.sha256})"
             return info
         self._write_marker(path, digest)

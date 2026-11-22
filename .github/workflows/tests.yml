@@ -54,17 +54,25 @@ jobs:
           .venv\Scripts\python.exe main.py probe clip_green.mp4
 
   linux:
-    name: Linux, manual install, Python 3.10
+    name: Linux, manual install, FFmpeg ${{ matrix.ffmpeg.label }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # The development build of FFmpeg is watched as an early warning; only released versions count.
+    continue-on-error: ${{ matrix.ffmpeg.preview }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ffmpeg:
+          - { label: "9.0", file: "ffmpeg-n9.0-latest-linux64-gpl-9.0.tar.xz", preview: false }
+          - { label: "development build (preview)", file: "ffmpeg-master-latest-linux64-gpl.tar.xz", preview: true }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: FFmpeg (current static build)
+      - name: FFmpeg (static build)
         run: |
-          curl -fsSL -o ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
+          curl -fsSL -o ffmpeg.tar.xz "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${{ matrix.ffmpeg.file }}"
           mkdir -p "$HOME/ffmpeg"
           tar -xJf ffmpeg.tar.xz -C "$HOME/ffmpeg" --strip-components=1
           echo "$HOME/ffmpeg/bin" >> "$GITHUB_PATH"
