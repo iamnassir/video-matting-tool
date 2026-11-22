@@ -108,7 +108,13 @@ Every run prints this kind of table and writes it to `<output>.report.json`:
   frame, of which 10 ms is the edge colour decontamination), not by RVM itself.
 * **Truncated files** are processed up to the cut with a clear warning; an MP4 that lost its index
   cannot be read.
-* **Not tested here**: Apple MPS, Linux, the Dockerfile (no Docker on the development machine).
+* **Where it was tested**: with an NVIDIA card on Windows 11 (the development machine), and on the
+  processor only on clean Windows and Linux machines (see Tests below). **Not tested**: Apple MPS,
+  the Dockerfile, NVIDIA cards on Linux, and cards newer than the RTX 40 series (PyTorch 2.5.1
+  cannot drive them; the tool then uses the processor).
+* **FFmpeg**: verified with the releases 8.1, 9.0 and 9.1. With FFmpeg's current development
+  build, MKV and WebM outputs are reported as "variable frame rate" by the frame-rate check
+  although the file is correct; MP4 and MOV are not affected.
 * The web server has no authentication and binds to localhost by default.
 
 ## Project layout
@@ -141,7 +147,12 @@ python -m pytest
 
 Tests that need model weights, a GPU, real footage or a browser skip themselves when those are not
 available. On the development machine, with everything installed, the whole suite
-(about 700 tests, 5 minutes) passes.
+(737 tests, 5 minutes) passes.
+
+Every change is also installed and tested on clean machines by GitHub Actions
+(`.github/workflows/tests.yml`): Windows with `install.bat` on Python 3.10 and 3.12, and Linux with
+the manual steps, all without a graphics card (725 tests pass, 12 skip for lack of a GPU or of the
+downloadable test footage), followed by a complete run with the default model.
 
 ## Licence notes
 

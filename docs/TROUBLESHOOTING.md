@@ -37,6 +37,7 @@ lines. The report (`<output>.report.json`) records warnings and the result of ev
 | "probably truncated or damaged" warning | The file ends early (interrupted download or recording) | The frames that can be read are processed and the output verifies against them; get a complete copy for the rest. An MP4 without its index (`moov`) cannot be read at all. |
 | `unsupported_format`: "is a text file, not a video" | A renamed non-video file | Choose a real video file. |
 | A job in the web interface seems frozen | | Look at `data/logs/stall-traces.log`: when a running job reports no progress for 5 minutes (`stall_dump_seconds`), the stacks of all threads are written there. Restart the server; the job shows as *interrupted* and can be resumed. |
+| "The source has a constant frame rate but the output a variable one" for an MKV or WebM output | A development build of FFmpeg newer than 9.1 is installed; it reports Matroska time differently | The file is correct. Use a released FFmpeg, or an MP4 / MOV output. |
 | Browser cannot play the source preview | The proxy is still being created or failed | The frame view and processing still work. |
 
 ## Interrupted runs

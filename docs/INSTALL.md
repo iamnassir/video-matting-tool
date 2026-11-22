@@ -1,8 +1,9 @@
 # Installation
 
-Tested on Windows 11 with Python 3.10, PyTorch 2.5.1 (CUDA 12.1) and FFmpeg 8.1. Linux and macOS use
-the same steps; the Apple MPS and Docker paths are implemented but were not tested on the
-development machine.
+Tested on Windows 11 with Python 3.10, PyTorch 2.5.1 (CUDA 12.1) and FFmpeg 8.1 on an NVIDIA card,
+and without a graphics card on clean Windows (Python 3.10 and 3.12, FFmpeg 9.1) and Linux (Python
+3.10, FFmpeg 9.0) machines. macOS uses the same steps; the Apple MPS and Docker paths are
+implemented but were not tested.
 
 ## Windows: the short way
 
