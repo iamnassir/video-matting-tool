@@ -57,7 +57,7 @@ Linux, macOS, optional models and manual steps: [docs/INSTALL.md](docs/INSTALL.m
 python -m venv .venv && .venv\Scripts\activate
 pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 pip install -r requirements.txt -c constraints.txt
-python main.py models download rvm
+python main.py models download rvm --all --accept-license     # GPL-3.0, see docs/MODELS.md
 python main.py process -i input.mp4 -o output_green.mp4
 ```
 

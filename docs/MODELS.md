@@ -6,10 +6,14 @@ source of its authors, is pinned by size and SHA-256, and is downloaded only whe
 ```
 python main.py models list                    # what is installed, licences
 python main.py models info sam2               # variants, files, limitations
-python main.py models download rvm            # official source, verified
+python main.py models download rvm --all --accept-license   # official source, verified
 python main.py models verify                  # re-check every SHA-256
 python main.py models remove matanyone
 ```
+
+`--accept-license` is required for models whose licence has conditions (`rvm`, `detector`,
+`matanyone`); without it the command prints the conditions and stops. `--all` fetches every
+variant of a model.
 
 Weights are stored in `models/<model id>/`. Mirrors or pinned copies can be configured per file with
 `weight_overrides` in `configs/default.yaml`.
@@ -58,7 +62,7 @@ This is engineering documentation, not legal advice: read the licence texts link
 ## Robust Video Matting (`rvm`)
 
 * Source: github.com/PeterL1n/RobustVideoMatting, official TorchScript files (MobileNetV3 and ResNet50).
-* Install: nothing beyond the base requirements. `python main.py models download rvm`.
+* Install: nothing beyond the base requirements. `python main.py models download rvm --all --accept-license`.
 * Limitations: trained on people only; mattes every person, so two people who touch cannot be
   separated (use `sam2_rvm`); hand-held objects are often dropped; no prompt.
 
@@ -83,7 +87,7 @@ switches that off). Needs the `sam2` package and the weights of both models. Peo
 * Source: github.com/pq-yang/MatAnyone (pinned commit) and the official v1.0.0 release files of
   MatAnyone and MatAnyone 2. Default variant: `matanyone2`.
 * Install: `python scripts/install_models.py matanyone --accept-license`, then
-  `python main.py models download matanyone`.
+  `python main.py models download matanyone --accept-license`.
 * Needs a mask on the reference frame. `--subject mask:<file>` uses yours; box, click, text and
   automatic selection are turned into that mask by SAM 2 and the detector, which must then be installed.
 * Memory grows with the square of the frame size, so frames are analysed at a reduced internal
@@ -97,7 +101,7 @@ switches that off). Needs the `sam2` package and the weights of both models. Peo
 
 | Id | Used for | Install |
 |----|----------|---------|
-| `detector` | `--subject auto`, and turning a click on a garment into "the whole person" | `python main.py models download detector` |
+| `detector` | `--subject auto`, and turning a click on a garment into "the whole person" | `python main.py models download detector --accept-license` |
 | `text_grounding` | `--subject "text:the woman on the left"` | `python scripts/install_models.py text`, then `python main.py models download text_grounding` |
 | SAM 2 image predictor | box / clicks to a precise mask | comes with `sam2` |
 

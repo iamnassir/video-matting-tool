@@ -59,10 +59,12 @@ this build cannot drive, the tool reports that the GPU failed its self-test and 
 
 ## 3. Models
 
-Downloads are explicit. The smallest useful setup is RVM (15 MB + 103 MB):
+Downloads are explicit. A model whose licence has conditions is only downloaded with
+`--accept-license`; without it the command prints the conditions and stops. The smallest useful
+setup is RVM (GPL-3.0; two variants, 15 MB + 103 MB, used by the fast and the high quality presets):
 
 ```
-python main.py models download rvm
+python main.py models download rvm --all --accept-license
 ```
 
 Optional models (see [MODELS.md](MODELS.md) for what each one is for and its licence):
@@ -70,10 +72,10 @@ Optional models (see [MODELS.md](MODELS.md) for what each one is for and its lic
 ```
 python scripts/install_models.py sam2
 python main.py models download sam2
-python main.py models download detector              # automatic subject detection
+python main.py models download detector --accept-license    # automatic subject detection
 
 python scripts/install_models.py matanyone --accept-license     # non-commercial licence
-python main.py models download matanyone
+python main.py models download matanyone --accept-license
 
 python scripts/install_models.py text                # text prompts
 python main.py models download text_grounding

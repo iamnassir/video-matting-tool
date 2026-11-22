@@ -37,7 +37,7 @@ jobs:
         shell: cmd
         env:
           VMT_PYTHON: python
-        run: call install.bat --no-pause
+        run: call install.bat --no-pause --accept-rvm-license
       - name: Test dependencies
         shell: cmd
         run: .venv\Scripts\python.exe -m pip install -r requirements-dev.txt -c constraints.txt --no-cache-dir
@@ -75,7 +75,7 @@ jobs:
           .venv/bin/python -m pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
           .venv/bin/python -m pip install -r requirements.txt -c constraints.txt
           .venv/bin/python -m pip install -r requirements-dev.txt -c constraints.txt
-          .venv/bin/python main.py models download rvm
+          .venv/bin/python main.py models download rvm --all --accept-license
           .venv/bin/python main.py system
       - name: Tests
         run: .venv/bin/python -m pytest -q
