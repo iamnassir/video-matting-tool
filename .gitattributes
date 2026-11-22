@@ -1,0 +1,4 @@
+# Text files are stored with LF line endings.  Windows batch files are stored exactly as they are
+# (CRLF), so that they also work from a ZIP download.
+* text=auto eol=lf
+*.bat -text

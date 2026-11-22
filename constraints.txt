@@ -1,0 +1,9 @@
+# Version constraints applied to every pip install into this environment:
+#     pip install -c constraints.txt ...
+# They stop pip from replacing NumPy, OpenCV or PyAV while it resolves the dependencies of other
+# packages.  PyTorch is protected separately: scripts/install_models.py adds the PyTorch build that
+# is installed (CUDA, CPU or Apple) to these constraints before it installs anything.
+
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+av==17.1.0

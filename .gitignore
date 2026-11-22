@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Application data (never commit media, weights or caches)
+/data/
+/output/
+/.cache/
+/models/*
+!/models/README.md
+!/models/.gitkeep
+*.part
+*.verified.json
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local test media (real footage, never committed)
+/tests/data/

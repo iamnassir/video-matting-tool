@@ -1,0 +1,28 @@
+# Video Matting Tool - core runtime dependencies (the exact versions the tool was built and tested with).
+#
+# PyTorch is NOT listed here on purpose: install the build that matches your hardware FIRST
+# (see docs/INSTALL.md), for example
+#   NVIDIA GPU :  pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+#   CPU only   :  pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
+#   Apple MPS  :  pip install torch==2.5.1 torchvision==0.20.1
+# then:  pip install -r requirements.txt -c constraints.txt
+#
+# FFmpeg (ffmpeg + ffprobe, version 7 or newer; developed against 8.1) must be on PATH.
+#
+# Optional model packages (SAM 2, MatAnyone, text prompts) are installed with
+#   python scripts/install_models.py --help
+# because they must be installed without their own dependency pins (they would replace PyTorch).
+
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+av==17.1.0                     # PyAV; newest release with Python 3.10 wheels (any version >= 14.2 works)
+fastapi==0.162.5
+uvicorn[standard]==0.54.0
+pydantic==2.14.4
+typer==0.29.1
+rich==15.0.0
+psutil==7.2.2
+nvidia-ml-py==13.615.71        # GPU utilisation / VRAM readings (optional at run time)
+PyYAML==6.0.4
+pillow==12.3.0
+tqdm==4.70.1

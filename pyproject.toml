@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-matting-tool"
+version = "1.0.0"
+description = "AI video matting and green-screen conversion that preserves the source's resolution, timing, audio and pixels."
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["video", "matting", "green screen", "chroma key", "segmentation", "ffmpeg"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Multimedia :: Video",
+]
+# PyTorch is intentionally not listed here: install the build that matches your hardware first
+# (CUDA / MPS / CPU), see docs/INSTALL.md.  Everything else is in requirements.txt.
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.9",
+    "av>=14.2",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "python-multipart>=0.0.9",
+    "typer>=0.12",
+    "rich>=13",
+    "psutil>=5.9",
+    "nvidia-ml-py>=12",
+    "pyyaml>=6",
+    "pillow>=10",
+    "huggingface_hub>=0.24",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-timeout>=2.3", "httpx>=0.27"]
+
+[project.scripts]
+video-matting-tool = "app.cli.main:run"
+vmt = "app.cli.main:run"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+"app.ui" = ["static/**/*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+# Keep every test artefact inside the project (never in the system temp directory).
+addopts = "-ra --strict-markers -p no:cacheprovider --basetemp=.cache/pytest_tmp"
+timeout = 900
+markers = [
+    "gpu: needs a CUDA device and real model weights (deselect with -m 'not gpu')",
+    "slow: takes more than a few seconds",
+    "models: needs model weights on disk (skipped automatically when they are missing)",
+    "ui: browser driven end-to-end test (needs playwright)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources.*",
+]

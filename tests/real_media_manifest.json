@@ -1,0 +1,676 @@
+{
+ "schema": "vmt-test-media/1",
+ "note": "Real footage used by the optional real-clip tests. Files are NOT part of the repository: run 'python scripts/download_test_assets.py' to fetch them into tests/data/real/. They are for local testing only; respect each clip's licence.",
+ "clips": {
+  "A1_presenter_1080p60": {
+   "path": "pexels_17811907_presenter/17811907-hd_1920_1080_60fps.mp4",
+   "source_url": "https://videos.pexels.com/video-files/17811907/17811907-hd_1920_1080_60fps.mp4",
+   "license": "Pexels License (https://www.pexels.com/license/): free to use, attribution not required, modification allowed; no redistribution/sale on other stock platforms, no selling unaltered copies, identifiable people not in a bad light, no implied endorsement",
+   "sha256": "abea58e64e132a3484884b8966b7828b56310b5e8a867abc567115603b7f3877",
+   "bytes": 10017663,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     785,
+     155,
+     1340,
+     1080
+    ],
+    "positive_points": [
+     [
+      1050,
+      560
+     ]
+    ],
+    "negative_points": [],
+    "overlay": "pexels_17811907_presenter/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 3.0
+    },
+    {
+     "name": "camera_orbit",
+     "start": 0.0,
+     "duration": 9.0
+    },
+    {
+     "name": "profile_turn_use_prompts_alt",
+     "start": 12.012,
+     "duration": 5.0
+    }
+   ]
+  },
+  "A2_cbp_videoblog_speech": {
+   "path": "dvids_582656_cbp_videoblog_day4/DOD_105287771-1024x576-1769k.mp4",
+   "source_url": "https://d34w7g4gy10iej.cloudfront.net/video/1802/DOD_105287771/DOD_105287771-1024x576-1769k.mp4",
+   "license": "Marked PUBLIC DOMAIN on DVIDS; must comply with https://www.dvidshub.net/about/copyright (U.S. Government work not eligible for US copyright; non-endorsement disclaimer; no use implying endorsement)",
+   "sha256": "f3d50643eb30190f19c27662a64f79d7e43f18dc3eacac6776b5d1f60ae8008b",
+   "bytes": 7635961,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     296,
+     64,
+     730,
+     576
+    ],
+    "positive_points": [
+     [
+      430,
+      330
+     ]
+    ],
+    "negative_points": [
+     [
+      935,
+      205
+     ],
+     [
+      140,
+      548
+     ]
+    ],
+    "overlay": "dvids_582656_cbp_videoblog_day4/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 4.0
+    },
+    {
+     "name": "audio_av_sync",
+     "start": 0.0,
+     "duration": 10.0
+    },
+    {
+     "name": "cut_handling_use_prompts_alt",
+     "start": 15.015,
+     "duration": 7.0
+    }
+   ]
+  },
+  "B1_street_interview_720p": {
+   "path": "matanyone_media_sample1_720p/test-sample1-720p.mp4",
+   "source_url": "https://github.com/pq-yang/MatAnyone/releases/download/media/test-sample1-720p.mp4",
+   "license": "Repository: NTU S-Lab License 1.0 (non-commercial). Footage is a third-party street-interview video with no stated source/licence: local testing only, never redistribute",
+   "sha256": "6f92344570ff826b7d245d4273037608b552fa1eb41bea0bad65f906a563da32",
+   "bytes": 517647,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject": "woman",
+    "subject_bbox": [
+     247,
+     186,
+     559,
+     720
+    ],
+    "positive_points": [
+     [
+      400,
+      520
+     ]
+    ],
+    "negative_points": [
+     [
+      840,
+      520
+     ]
+    ],
+    "other_person_bbox": [
+     651,
+     135,
+     1037,
+     720
+    ],
+    "overlay": "matanyone_media_sample1_720p/prompt_overlay_frame_00000.jpg",
+    "mask_overlay": "matanyone_media_sample1_720p/mask_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast_whole_clip",
+     "start": 0.0,
+     "duration": 2.4
+    }
+   ]
+  },
+  "B2_two_men_street_1080p": {
+   "path": "pexels_7325952_two_men_street/7325952-hd_1920_1080_24fps.mp4",
+   "source_url": "https://videos.pexels.com/video-files/7325952/7325952-hd_1920_1080_24fps.mp4",
+   "license": "Pexels License (https://www.pexels.com/license/)",
+   "sha256": "e36c2cfae05556d5136bfdb5fa1743e24d0a420badd9b8a2fdfb7d07468d5c81",
+   "bytes": 5956168,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject": "left man (yellow beanie)",
+    "subject_bbox": [
+     180,
+     195,
+     900,
+     1080
+    ],
+    "positive_points": [
+     [
+      650,
+      620
+     ]
+    ],
+    "negative_points": [
+     [
+      1250,
+      800
+     ]
+    ],
+    "other_person_bbox": [
+     800,
+     235,
+     1480,
+     1080
+    ],
+    "overlay": "pexels_7325952_two_men_street/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "occlusion",
+     "start": 0.0,
+     "duration": 4.5
+    }
+   ]
+  },
+  "B3_sam2_bedroom_540p": {
+   "path": "sam2_bedroom/bedroom.mp4",
+   "source_url": "https://github.com/facebookresearch/sam2/raw/main/notebooks/videos/bedroom.mp4",
+   "license": "Repository LICENSE is Apache-2.0 (README licence statement names checkpoints, demo code and training code); no separate attribution/licence for the sample video. Shows identifiable children: local testing only",
+   "sha256": "1be76d5d19b066e8ad7c565d88a98e11a8f8d456a707508a7aa35390def70e30",
+   "bytes": 2380401,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject": "girl",
+    "subject_bbox": [
+     308,
+     0,
+     518,
+     398
+    ],
+    "positive_points": [
+     [
+      398,
+      215
+     ]
+    ],
+    "negative_points": [
+     [
+      225,
+      250
+     ]
+    ],
+    "other_person_bbox": [
+     143,
+     135,
+     295,
+     408
+    ],
+    "overlay": "sam2_bedroom/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "identity_through_occlusion",
+     "start": 0.0,
+     "duration": 4.5
+    }
+   ]
+  },
+  "B4_intel_classroom_1080p_fullrange": {
+   "path": "intel_classroom/classroom.mp4",
+   "source_url": "https://github.com/intel-iot-devkit/sample-videos/raw/master/classroom.mp4",
+   "license": "CC BY 4.0 (repository LICENSE: Attribution 4.0 International)",
+   "sha256": "a69bd5e39ff0e74286d13bcbfdadddd307b85decd2d9853db7518e0028785e31",
+   "bytes": 13548133,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject": "front-right man with glasses",
+    "subject_bbox": [
+     1150,
+     568,
+     1400,
+     918
+    ],
+    "positive_points": [
+     [
+      1270,
+      760
+     ]
+    ],
+    "negative_points": [
+     [
+      320,
+      700
+     ]
+    ],
+    "other_person_bboxes": [
+     [
+      190,
+      565,
+      465,
+      895
+     ],
+     [
+      445,
+      490,
+      625,
+      705
+     ],
+     [
+      862,
+      488,
+      1047,
+      700
+     ]
+    ],
+    "overlay": "intel_classroom/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "stand_up",
+     "start": 0.0,
+     "duration": 8.0
+    }
+   ]
+  },
+  "C1_man_walking_vertical": {
+   "path": "pexels_7963137_man_walking_vertical/7963137-hd_1080_1920_30fps.mp4",
+   "source_url": "https://videos.pexels.com/video-files/7963137/7963137-hd_1080_1920_30fps.mp4",
+   "license": "Pexels License (https://www.pexels.com/license/)",
+   "sha256": "f4769abac07da90d643c9e408b9b9d60fbae5dbceaed8ac931cbebb9db52d5fe",
+   "bytes": 7219929,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     130,
+     445,
+     885,
+     1920
+    ],
+    "positive_points": [
+     [
+      540,
+      1150
+     ]
+    ],
+    "negative_points": [
+     [
+      928,
+      1010
+     ]
+    ],
+    "other_person_bbox": [
+     880,
+     905,
+     975,
+     1180
+    ],
+    "overlay": "pexels_7963137_man_walking_vertical/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "full",
+     "start": 0.0,
+     "duration": 10.0
+    }
+   ]
+  },
+  "C2_couple_selfie_vertical": {
+   "path": "pexels_13931629_couple_selfie_vertical/13931629-hd_1080_1920_24fps.mp4",
+   "source_url": "https://videos.pexels.com/video-files/13931629/13931629-hd_1080_1920_24fps.mp4",
+   "license": "Pexels License (https://www.pexels.com/license/)",
+   "sha256": "4b7e8c5f2b1cb8891e6a74c134f4f40db753fd980f44492fbd2e115462344cad",
+   "bytes": 6690657,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject": "woman",
+    "subject_bbox": [
+     255,
+     905,
+     690,
+     1920
+    ],
+    "positive_points": [
+     [
+      490,
+      1330
+     ]
+    ],
+    "negative_points": [
+     [
+      830,
+      1500
+     ]
+    ],
+    "other_person_bbox": [
+     595,
+     825,
+     1010,
+     1920
+    ],
+    "overlay": "pexels_13931629_couple_selfie_vertical/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "motion",
+     "start": 0.0,
+     "duration": 7.0
+    }
+   ]
+  },
+  "C3_curly_hair_vertical": {
+   "path": "pexels_6145409_curly_hair_vertical/6145409-hd_1080_1920_24fps.mp4",
+   "source_url": "https://videos.pexels.com/video-files/6145409/6145409-hd_1080_1920_24fps.mp4",
+   "license": "Pexels License (https://www.pexels.com/license/)",
+   "sha256": "195ea19ba63b167a02cc4d4683257a05d2058e04fdd5c89c4c21db967185a5f2",
+   "bytes": 6354327,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     0,
+     540,
+     1080,
+     1920
+    ],
+    "positive_points": [
+     [
+      520,
+      1000
+     ]
+    ],
+    "negative_points": [],
+    "overlay": "pexels_6145409_curly_hair_vertical/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "hand_through_hair",
+     "start": 0.0,
+     "duration": 6.0
+    }
+   ]
+  },
+  "M1_matanyone_sample1_joker_720p": {
+   "path": "matanyone_sample1/test-sample1.mp4",
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/video/test-sample1.mp4",
+   "license": "Repository: NTU S-Lab License 1.0 (non-commercial). Clip is an excerpt of a commercial feature film (third-party copyright): local testing only, never redistribute",
+   "sha256": "3f797e861a039ea86c7e0548f386980d3be0c09d7a09c1c2c99ab289a2033984",
+   "bytes": 612843,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     380,
+     58,
+     782,
+     720
+    ],
+    "positive_points": [
+     [
+      600,
+      420
+     ]
+    ],
+    "negative_points": [
+     [
+      1130,
+      300
+     ],
+     [
+      75,
+      380
+     ]
+    ],
+    "overlay": "matanyone_sample1/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast_whole_clip",
+     "start": 0.0,
+     "duration": 2.63
+    }
+   ]
+  },
+  "M2_matanyone_sample2_three_men_1088p": {
+   "path": "matanyone_sample2/test-sample2.mp4",
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/video/test-sample2.mp4",
+   "license": "Repository: NTU S-Lab License 1.0 (non-commercial). Clip is an excerpt of a commercial feature film (third-party copyright): local testing only, never redistribute",
+   "sha256": "bac40e240a4eb309faad56482b0eb22c779ad611c38a7173be6de0b4794dc547",
+   "bytes": 3444278,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject": "right man",
+    "subject_bbox": [
+     1224,
+     215,
+     1920,
+     1013
+    ],
+    "positive_points": [
+     [
+      1450,
+      600
+     ]
+    ],
+    "negative_points": [
+     [
+      700,
+      500
+     ],
+     [
+      1070,
+      620
+     ]
+    ],
+    "overlay": "matanyone_sample2/prompt_overlay_frame_00000.jpg",
+    "mask_overlay": "matanyone_sample2/mask_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 2.0
+    },
+    {
+     "name": "whole",
+     "start": 0.0,
+     "duration": 4.5
+    }
+   ]
+  },
+  "M3_matanyone_sample3_trench_run": {
+   "path": "matanyone_sample3/test-sample3.mp4",
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/video/test-sample3.mp4",
+   "license": "Repository: NTU S-Lab License 1.0 (non-commercial). Clip is an excerpt of a commercial feature film (third-party copyright): local testing only, never redistribute",
+   "sha256": "ba9aee3fff0f0ac4dd5617f33325be9dd50ac53de16ebc09d92fe63171089b86",
+   "bytes": 11198414,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     726,
+     20,
+     1771,
+     804
+    ],
+    "positive_points": [
+     [
+      1250,
+      520
+     ]
+    ],
+    "negative_points": [
+     [
+      1810,
+      400
+     ]
+    ],
+    "overlay": "matanyone_sample3/prompt_overlay_frame_00000.jpg",
+    "mask_overlay": "matanyone_sample3/mask_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast",
+     "start": 0.0,
+     "duration": 3.0
+    },
+    {
+     "name": "audio_passthrough",
+     "start": 0.0,
+     "duration": 6.0
+    },
+    {
+     "name": "whole_stress",
+     "start": 0.0,
+     "duration": 25.0
+    }
+   ]
+  },
+  "M4_matanyone_media_sample3_street_explosion_720p": {
+   "path": "matanyone_media_sample3_720p/test-sample3-720p.mp4",
+   "source_url": "https://github.com/pq-yang/MatAnyone/releases/download/media/test-sample3-720p.mp4",
+   "license": "Repository: NTU S-Lab License 1.0 (non-commercial). Clip is an excerpt of a commercial feature film (third-party copyright): local testing only, never redistribute",
+   "sha256": "8d7ba438169255dd5ff128259ad11d0ac1b1961edf6ec973f5db1a304fd89675",
+   "bytes": 724260,
+   "prompts": {
+    "frame_index": 0,
+    "time_s": 0.0,
+    "subject_bbox": [
+     488,
+     183,
+     800,
+     720
+    ],
+    "positive_points": [
+     [
+      645,
+      400
+     ]
+    ],
+    "negative_points": [],
+    "overlay": "matanyone_media_sample3_720p/prompt_overlay_frame_00000.jpg"
+   },
+   "trims": [
+    {
+     "name": "fast_whole_clip",
+     "start": 0.0,
+     "duration": 3.03
+    }
+   ]
+  },
+  "T1_rotate_and_reflect": {
+   "path": "androidx_sample_rotate_and_reflect/sample_rotate_and_reflect.mp4",
+   "source_url": "https://github.com/androidx/media/raw/release/libraries/test_data/src/test/assets/media/mp4/sample_rotate_and_reflect.mp4",
+   "license": "Apache-2.0 (androidx/media repository LICENSE)",
+   "sha256": "4a0d7400ea659261820cb938b50ac6eec862ca5ec3bc7c86d9a74b74ca916b9f",
+   "bytes": 101674
+  },
+  "T2_phone_portrait_4k60": {
+   "path": "androidx_portrait_4k60/portrait_4k60.mp4",
+   "source_url": "https://github.com/androidx/media/raw/release/libraries/test_data/src/test/assets/media/mp4/portrait_4k60.mp4",
+   "license": "Apache-2.0 (androidx/media repository LICENSE)",
+   "sha256": "521337fca186aeb7b8b08462452e90cf3efa515ff0215f42f63aa62d738f5cf3",
+   "bytes": 2494339
+  },
+  "T3_iphone_dolby_vision_hlg": {
+   "path": "androidx_dolbyvision_hdr_iphone/dolbyVision-hdr.MOV",
+   "source_url": "https://github.com/androidx/media/raw/release/libraries/test_data/src/test/assets/media/mp4/dolbyVision-hdr.MOV",
+   "license": "Apache-2.0 (androidx/media repository LICENSE)",
+   "sha256": "c96e24bdfa7f3e0ef9b73b0b891805100119b9fa129e4cf10375af90846de534",
+   "bytes": 64565
+  },
+  "D1_derived_phone_portrait_with_person": {
+   "path": "_derived/derived_phone_portrait_rot-90_from_pexels_7963137_2s.mp4",
+   "source_url": null,
+   "license": null,
+   "sha256": "210b313c2081852cbb721cf5e464d15eeb277d6f576eca71737df0c0939588b9",
+   "bytes": 2260148
+  },
+  "D1_derived_phone_portrait": {
+   "path": "_derived/derived_phone_portrait_rot-90_from_pexels_7963137_2s.mp4",
+   "source_url": null,
+   "license": "derived from C1 (Pexels License); local testing only",
+   "sha256": "210b313c2081852cbb721cf5e464d15eeb277d6f576eca71737df0c0939588b9",
+   "bytes": 2260148,
+   "notes": "first 2 s of C1 stored sideways as 1920x1080 with a -90 display matrix; displays as upright 1080x1920; 60 frames"
+  }
+ },
+ "extra_files": {
+  "matanyone_sample0/test-sample0_1.png": {
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/mask/test-sample0_1.png",
+   "sha256": "5e5216e0fd529118c0ac0cd64357ec4943c324134a87a03524816add2eddaced",
+   "bytes": 9987,
+   "license": "MatAnyone repository (NTU S-Lab License 1.0); first-frame reference masks; local testing only"
+  },
+  "matanyone_sample0/test-sample0_2.png": {
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/mask/test-sample0_2.png",
+   "sha256": "afb2f15f7a9af98b2a6d17b4b998c0ac81e75368e5305c00d60e327c9583e1f2",
+   "bytes": 10590,
+   "license": "MatAnyone repository (NTU S-Lab License 1.0); first-frame reference masks; local testing only"
+  },
+  "matanyone_sample1/test-sample1.png": {
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/mask/test-sample1.png",
+   "sha256": "439c040bbe8e1d275541b50216447f92446c024c06c787fa5fc6b0e22feeb787",
+   "bytes": 5708,
+   "license": "MatAnyone repository (NTU S-Lab License 1.0); first-frame reference masks; local testing only"
+  },
+  "matanyone_sample2/test-sample2.png": {
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/mask/test-sample2.png",
+   "sha256": "4d436de4b787a806686f189d13507e05b269b241fd071b1e27b21b9df301691d",
+   "bytes": 11289,
+   "license": "MatAnyone repository (NTU S-Lab License 1.0); first-frame reference masks; local testing only"
+  },
+  "matanyone_sample3/test-sample3.png": {
+   "source_url": "https://raw.githubusercontent.com/pq-yang/MatAnyone/main/inputs/mask/test-sample3.png",
+   "sha256": "32d4b924f4c5e6153e8ab89f5c03a11f02da7fcacf580a6ecc651b5c8bd8cea9",
+   "bytes": 8184,
+   "license": "MatAnyone repository (NTU S-Lab License 1.0); first-frame reference masks; local testing only"
+  }
+ }
+}

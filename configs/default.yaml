@@ -1,0 +1,44 @@
+# Video Matting Tool - installation settings.
+# Every key is optional; values shown are the built-in defaults.
+# Precedence: built-in defaults < this file < file given by --config / VMT_CONFIG < VMT_* environment
+# variables < command line flags.  Relative paths are resolved against the project root.
+
+# --- directories ---------------------------------------------------------------------------
+models_dir: models          # model weights: <models_dir>/<model id>/<file>
+data_dir: data              # uploads, jobs, previews, reports (web UI)
+cache_dir: .cache           # third-party caches (TORCH_HOME, HF_HOME) and scratch files
+# temp_dir: data/tmp        # scratch directory for uploads and intermediates
+
+# --- FFmpeg -------------------------------------------------------------------------------
+# ffmpeg_path: C:/tools/ffmpeg/bin/ffmpeg.exe     # default: found on PATH
+# ffprobe_path: C:/tools/ffmpeg/bin/ffprobe.exe
+
+# --- models -------------------------------------------------------------------------------
+auto_download_models: false   # false = weights are only downloaded on explicit request
+commercial_use: false         # true = refuse models whose licence forbids commercial use
+plugins: []                   # importable modules that register additional model adapters
+weight_overrides: {}          # per file: {"rvm_mobilenetv3_fp32.torchscript": {url: "...", sha256: "..."}}
+
+# --- hardware -----------------------------------------------------------------------------
+default_device: auto          # auto | cuda | cuda:N | mps | cpu
+
+# --- local web server ---------------------------------------------------------------------
+host: 127.0.0.1
+port: 8765
+allow_path_import: true       # allow registering a local file path instead of uploading (loopback only)
+# max_upload_bytes: 21474836480
+
+# --- pipeline tuning ----------------------------------------------------------------------
+preview_tile_max_side: 640    # size of each tile of the 2x2 preview video
+decode_queue_frames: 24       # frames buffered between decoder and inference
+encode_queue_frames: 24       # frames buffered between compositing and each encoder
+
+# --- logging ------------------------------------------------------------------------------
+log_level: INFO
+# log_file: data/vmt.log
+
+# --- default processing settings (same schema as POST /api/jobs "config") ------------------
+defaults:
+  model: rvm
+  quality: balanced
+  background: green

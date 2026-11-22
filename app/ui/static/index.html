@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Video Matting Tool</title>
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/views.css" />
+    <script>
+      // Apply the remembered theme before the first paint.
+      try {
+        var saved = JSON.parse(window.localStorage.getItem('vmt.ui.v1') || '{}');
+        if (saved && (saved.theme === 'light' || saved.theme === 'dark')) {
+          document.documentElement.dataset.theme = saved.theme;
+        }
+      } catch (e) {}
+    </script>
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div class="boot" role="status">
+        <noscript>This interface needs JavaScript. Enable it in the browser and reload the page.</noscript>
+      </div>
+    </div>
+  </body>
+</html>

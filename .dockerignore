@@ -1,0 +1,16 @@
+.venv
+.cache
+.git
+.pytest_cache
+__pycache__
+*.pyc
+data
+models/*
+!models/README.md
+!models/.gitkeep
+tests/data
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi

@@ -1,0 +1,5 @@
+# Development and test dependencies:  pip install -r requirements-dev.txt -c constraints.txt
+pytest==9.2.0
+pytest-timeout==2.4.0
+httpx==0.28.1                  # FastAPI TestClient
+playwright==1.65.2             # browser tests of the web interface (uses the installed Edge / Chrome; no download needed)
