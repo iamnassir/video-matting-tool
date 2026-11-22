@@ -1,5 +1,7 @@
 # Video Matting Tool
 
+[![tests](https://github.com/iamnassir/video-matting-tool/actions/workflows/tests.yml/badge.svg)](https://github.com/iamnassir/video-matting-tool/actions/workflows/tests.yml)
+
 Removes the background of a video with AI matting models and composites the subject onto pure
 chroma green (`#00FF00`), another solid colour, or transparency, while preserving what an editor
 needs to be untouched: resolution, orientation, every frame and its timestamp, duration, colour
@@ -19,10 +21,11 @@ NVIDIA graphics card (about 1.5 GB without one, where it works but slowly).
 
 1. Once, in a terminal (Start menu, "Terminal"): `winget install Python.Python.3.10` and
    `winget install Gyan.FFmpeg`. Close the terminal afterwards.
-2. Download this project (green **Code** button, **Download ZIP**, then unpack it) and double-click
-   `install.bat`. It creates its own Python environment inside the project folder, installs PyTorch
-   (the NVIDIA build when an NVIDIA card is present, otherwise the processor build) and downloads the
-   default model (120 MB).
+2. Download the project from https://github.com/iamnassir/video-matting-tool (green **Code** button,
+   **Download ZIP**, then unpack it) and double-click `install.bat`. It creates its own Python
+   environment inside the project folder, installs PyTorch (the NVIDIA build when an NVIDIA card is
+   present, otherwise the processor build) and, after you accepted its licence, downloads the
+   default model (120 MB). With an NVIDIA card the download is about 2.5 GB, so give it time.
 3. Double-click `start_web.bat`. The tool opens in your browser at http://127.0.0.1:8765. Keep the
    black window open while you work; closing it stops the tool.
 

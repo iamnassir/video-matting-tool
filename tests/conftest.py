@@ -17,6 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# pytest creates its base temp directory (.cache/pytest_tmp, see pyproject.toml) but not the folder
+# above it, and on a fresh checkout .cache does not exist yet.
+(ROOT / ".cache").mkdir(exist_ok=True)
+
 from tests.helpers import media  # noqa: E402
 
 requires_ffmpeg = pytest.mark.skipif(
