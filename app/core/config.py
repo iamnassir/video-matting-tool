@@ -506,7 +506,7 @@ class ProcessingConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid", use_enum_values=False)
 
-    model: str = Field("rvm", description="Model adapter id: rvm | sam2 | matanyone | sam2_rvm | <plugin id>.")
+    model: str = Field("rvm", description="Model adapter id: rvm | sam2 | matanyone | sam2_rvm | sam2_matanyone | <plugin id>.")
     variant: Optional[str] = Field(None, description="Model variant. None = chosen by the quality preset.")
     quality: QualityPreset = QualityPreset.BALANCED
     device: str = Field("auto", description="auto | cuda | cuda:N | mps | cpu")

@@ -381,6 +381,9 @@ class _Run:
         self.subject: Optional[ResolvedSubject] = None
         self.tracker: Optional[ComponentSubjectTracker] = None
         self.sequence_started = False
+        self.two_pass = False                      # the model revises its mattes after seeing the whole clip
+        self.revised_now = False                   # ... and did so in this run
+        self.revised_marker: Optional[Path] = None
         self.written_pts: List[int] = []
         self.samples: List[FrameSample] = []
         self.frames_from_cache = 0
@@ -638,6 +641,18 @@ class _Run:
             log.info("Existing matte cache was not reusable: %s", self.store.reset_reason)
         self.store_writes = use_cache
         self.matte_writer = _MatteWriter(self.store)
+        # A two-pass model's cache is usable only when it is complete and was revised: the raw mattes
+        # of an interrupted run cannot be revised later, because what the model noted about the clip
+        # is gone with the process.
+        self.two_pass = bool(caps.two_pass)
+        self.revised_marker = self.work_dir / "mattes.revised"
+        if self.two_pass:
+            usable = use_cache and self.revised_marker.exists() and self.store.covers(0, self.total)
+            if not usable:
+                if len(self.store):
+                    log.info("The matte cache of an unfinished run cannot be continued with this model: starting again.")
+                    self.store.drop_from(0)
+                safe_unlink(self.revised_marker)
         self.cached_end = min(self.store.contiguous_end(0), self.total) if use_cache else 0
         self.report.resumed = self.cached_end > 0
         model_needed = self.cached_end < self.total
@@ -918,6 +933,7 @@ class _Run:
         return SequenceInfo(
             width=self.dw, height=self.dh, fps=self.fps, num_frames=frames, start_index=start, reverse=reverse,
             subject=subject, inference_max_side=QUALITY_PRESETS[self.config.quality].inference_max_side,
+            will_revise=self.two_pass,
         )
 
     def _run_model(self, frames: torch.Tensor, indices: Sequence[int]) -> Tuple[torch.Tensor, List[Optional[float]]]:
@@ -939,6 +955,9 @@ class _Run:
     def _backtrack(self) -> None:
         """Track the subject from the reference frame back to frame 0 and cache those mattes."""
 
+        if self.two_pass:
+            self._track_whole_clip()
+            return
         if self.seq_start is None or self.ref <= 0 or self.cached_end > self.ref:
             return
         if self.store.covers(0, self.ref):
@@ -983,6 +1002,92 @@ class _Run:
                 self.model.end_sequence()
             self.matte_writer.drain()
             self.store.flush()
+
+    def _track_whole_clip(self) -> None:
+        """Two-pass models: matte every frame into the cache, let the model revise, then render from the cache.
+
+        The model runs backwards from the reference frame to frame 0 and forwards from it to the last
+        frame; afterwards :meth:`MattingModel.revise` sees all mattes and may replace them.  Rendering
+        then finds every frame in the cache.
+        """
+
+        if self.seq_start is None:                 # everything is cached and was revised by an earlier run
+            return
+        caps = self.model.info.capabilities
+        backwards = self.ref > 0
+        if backwards and not self.config.subject.track_backward:
+            self._warn(f"Frames 0-{self.ref - 1} precede the subject's reference frame and backward tracking is off: they are left empty.")
+            backwards = False
+        if backwards and not caps.supports_reverse:
+            self._warn(f"Model '{self.model.info.id}' cannot track backwards: frames 0-{self.ref - 1} are left empty.")
+            backwards = False
+        # The model's work on all frames happens here; rendering afterwards only composites.  The two
+        # stages share the weight rendering has otherwise, so the overall percentage never steps back.
+        render_weight = ProgressReporter.STAGE_WEIGHTS[Stage.RENDER]
+        self.reporter.set_stage_weight(Stage.BACKTRACK, 0.8 * render_weight)
+        self.reporter.set_stage_weight(Stage.RENDER, 0.2 * render_weight)
+        self.reporter.stage(Stage.BACKTRACK, "Following the subject through the whole clip", total_frames=self.total)
+        done = 0
+
+        def run(frames_iter: Iterator[DecodedFrame], start: int, reverse: bool, count: int, keep: Any) -> None:
+            nonlocal done
+            self.model.start_sequence(self._sequence_info(start, reverse, self.subject, count))
+            tracker = self._new_tracker(self.subject)
+            feeder = _FrameFeeder(frames_iter, self.loop_batch, 2)
+            feeder.start()
+            try:
+                for batch in feeder:
+                    self.cancel.raise_if_cancelled()
+                    indices = [f.index for f in batch]
+                    _, _, rgb_display = self._to_device(batch)
+                    alpha, _ = self._run_model(rgb_display, indices)
+                    if tracker is not None:
+                        alpha = tracker.apply(alpha, indices)
+                    q = self._quantize(alpha)
+                    for k, idx in enumerate(indices):
+                        if keep(idx):
+                            self.matte_writer.put(idx, self._matte_to_numpy(q[k, 0]))
+                            done += 1
+                    self.reporter.advance(min(done, self.total))
+            finally:
+                feeder.stop()
+                self.model.end_sequence()
+
+        with self._timed("backtrack"):
+            if backwards:
+                try:
+                    reverse_iter: Optional[Iterator[DecodedFrame]] = self.reader.frames_reverse(self.ref + 1, 0)
+                except VmtError as exc:
+                    self._warn(f"Backward tracking is not possible for this file ({exc.message}); frames 0-{self.ref - 1} are left empty.")
+                    reverse_iter = None
+                if reverse_iter is not None:
+                    run(reverse_iter, self.ref, True, self.ref + 1, lambda idx: idx < self.ref)
+            run(self.reader.frames(self.ref, self.total), self.ref, False, self.total - self.ref, lambda idx: True)
+            self.matte_writer.drain()
+            self.store.flush()
+
+            self.reporter.advance(min(done, self.total), message="Fixing the outline for the whole clip", force=True)
+            dtype = np.uint8 if self.matte_bits == 8 else np.uint16
+
+            def load(index: int) -> np.ndarray:
+                return self.store.get(index).astype(np.float32) / self.matte_max
+
+            def save(index: int, matte: np.ndarray) -> None:
+                levels = np.rint(np.clip(np.asarray(matte, dtype=np.float32), 0.0, 1.0) * self.matte_max)
+                self.store.put(index, levels.astype(dtype))
+
+            self.model.revise([i for i in range(self.total) if self.store.has(i)], load, save,
+                              self.cancel.raise_if_cancelled)
+            self.store.flush()
+            atomic_write_text(self.revised_marker, "revised")
+        try:
+            self.report.model["runtime"] = self.model.runtime_summary()
+        except Exception as exc:  # pragma: no cover - the summary is informational
+            log.debug("runtime summary failed: %s", exc)
+        # From here on every frame comes from the cache.
+        self.cached_end = self.total
+        self.seq_start = None
+        self.revised_now = True
 
     # ---------------------------------------------------------------------------- render
     def _start_sinks(self) -> None:
@@ -1030,7 +1135,7 @@ class _Run:
             if from_cache and self.store.has(idx):
                 matte = self.store.get(idx).astype(np.float32) / self.matte_max
                 alpha[k, 0] = torch.from_numpy(matte).to(self.device)
-                if idx < self.cached_end:
+                if idx < self.cached_end and not self.revised_now:
                     self.frames_from_cache += 1
         return alpha, presence
 

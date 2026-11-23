@@ -9,7 +9,7 @@ lines. The report (`<output>.report.json`) records warnings and the result of ev
 | `weights_missing` | Weights not downloaded | `python main.py models download <id>` (or `--download-models` for this run). |
 | `model_not_installed` | Optional package missing | `python scripts/install_models.py sam2` / `matanyone --accept-license` / `text`. |
 | `weights_checksum_mismatch` | Corrupt or changed download | `python main.py models remove <id>` and download again. |
-| `license_restriction` | `--commercial` with a non-commercial model | Use `rvm`, `sam2` or `sam2_rvm`. |
+| `license_restriction` | `--commercial` with a non-commercial model (`matanyone`, `sam2_matanyone`) | Use `rvm`, `sam2` or `sam2_rvm`. |
 | `subject_not_found` | No subject on the reference frame | Choose another `--subject-frame`, or select the subject with a box / clicks. |
 | Exit code 2, "Subject tracking" check failed | The model found no subject in any frame (for example a shot without a person with `rvm`) | Use `sam2` with a selection for non-human subjects. |
 | `prompt_not_supported` | The model needs a mask and no helper model is installed | Install SAM 2 and the detector, or pass `--subject mask:<file>`. |
@@ -31,8 +31,10 @@ lines. The report (`<output>.report.json`) records warnings and the result of ev
 | The browser says "connection refused" | The web server is not running | `python main.py serve`, or double-click `start_web.bat`; keep its window open. |
 | "is a colour picture, not a mask" | The mask image is an ordinary photograph | Supply a black-and-white mask, a cut-out with transparency, or a cut-out on one flat background colour (see "Mask images" in USAGE.md); or select with Click / Box. |
 | "The mask picture does not line up with frame N" | The cut-out shows a frame that was not found in the video (or another video) | Make the picture from a frame of this video; the tool then finds the frame itself. |
-| Car windows (or other openings) are not cut out | `sam2` follows whole objects and closes openings; `rvm` only mattes people | Use `matanyone` with a mask image in which the openings are cut out. |
-| Something passing behind the subject is kept for a few frames | It touches the subject's outline and looks similar | Trim those frames, or key the area out afterwards; a second reference frame is not supported yet. |
+| Car windows (or other openings) are not cut out | `sam2` follows whole objects and closes openings; `rvm` only mattes people | Use `sam2_matanyone` with a mask image in which the openings are cut out. |
+| The edge wobbles, or lumps appear, where the subject has the colour of the background (white roof, white sky) | No model can see an edge there; `matanyone` guesses anew on every frame | `sam2_matanyone` for a rigid object: it uses one outline for the whole clip. |
+| Something passing behind the subject is kept for a few frames | It touches the subject's outline and looks similar | `sam2_matanyone` keeps it out of a rigid object's outline. What passes behind an *opening* (seen through a window) can still show: key that area out afterwards; a second reference frame is not supported yet. |
+| A job with `sam2_matanyone` shows no picture for a long time | It analyses the whole clip before it writes the first frame | Wait for the stage "Following the subject through the whole clip"; if it is interrupted it starts again. |
 | Rotated phone video looks rotated in the result | It should not: rotation metadata is preserved | Check the "Orientation" line of the report and please report the file. |
 | "probably truncated or damaged" warning | The file ends early (interrupted download or recording) | The frames that can be read are processed and the output verifies against them; get a complete copy for the rest. An MP4 without its index (`moov`) cannot be read at all. |
 | `unsupported_format`: "is a text file, not a video" | A renamed non-video file | Choose a real video file. |

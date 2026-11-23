@@ -296,7 +296,8 @@ class _SubjectService:
         if info is not None and info.capabilities.subject_domain == "human" and prompt.mode != "auto":
             notes.append(
                 f"{info.name} mattes people only. If the selection is something else (a vehicle, a product, "
-                "an animal), choose the SAM 2 model, which follows any object."
+                "an animal), choose the SAM 2 model, which follows any object, or 'SAM 2 + MatAnyone' when "
+                "the object has parts you can see through."
             )
         if subject.mask is None:
             if prompt.mode == "auto":

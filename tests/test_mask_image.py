@@ -300,3 +300,38 @@ def test_search_stops_at_its_time_budget(tmp_path, selector, frames):
     aligned, notes = selector.align_mask_frame(prompt, reader, FRAMES, budget_seconds=0.0)
     assert aligned.frame_index == 0 and notes == []
     assert len(reader.calls) <= 2
+
+
+def test_border_line_and_specks_of_a_cutout_are_not_subject(tmp_path):
+    """Pictures from image tools often carry a dark line along a border: it is not the subject."""
+
+    frame = _photo()
+    picture = _cutout(frame, _ellipse())
+    clean = read_mask_image(str(_write(tmp_path / "clean.png", picture)), W, H).mask
+    picture[:2, :] = (20, 20, 20)                      # a dark line along the top border
+    picture[30:32, 300:303] = (200, 30, 30)            # a stray speck
+    path = _write(tmp_path / "lined.png", picture)
+    mask = read_mask_image(str(path), W, H).mask
+    assert float(mask[:4, :].max()) == 0.0
+    assert float(mask[26:36, 296:307].max()) == 0.0
+    assert _iou(mask, clean) > 0.995                   # the subject itself is untouched
+    # A subject that really touches the border stays.
+    touching = _ellipse()
+    touching[:60, 100:220] = 255
+    path = _write(tmp_path / "touching.png", _cutout(frame, touching))
+    kept = read_mask_image(str(path), W, H).mask
+    assert float(kept[:3, 110:210].mean()) > 0.8 and _iou(kept, touching) > 0.85
+
+
+def test_mask_with_openings_and_a_model_for_people(tmp_path, selector, frames):
+    """MatAnyone keeps openings but was made for people: the note names the model for objects."""
+
+    from app.models.registry import get_model_info
+
+    ring = _write(tmp_path / "ring.png", _ring())
+    subject = selector.resolve_on_frame(SubjectPrompt(mode="mask", mask_path=str(ring)), frames[0],
+                                        get_model_info("matanyone", selector.settings))
+    assert any("see-through openings" in n and "sam2_matanyone" in n for n in subject.notes)
+    subject = selector.resolve_on_frame(SubjectPrompt(mode="mask", mask_path=str(ring)), frames[0],
+                                        get_model_info("sam2_matanyone", selector.settings))
+    assert not any("openings" in n for n in subject.notes)        # the model made for this says nothing

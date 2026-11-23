@@ -86,7 +86,7 @@ render → mux → export → verify → done`.
 | `app/core` | Contracts: config models, data types, pixel formats, errors, progress events, hardware detection, report schema. No dependency on other `app` packages. |
 | `app/processing` | Video input (`probe`, `planes`, `reader`), the streaming `pipeline`, the raw-matte cache (`matte_store`). |
 | `app/models` | `base` (adapter interface), `registry` (plugins), `weights` (verified downloads), adapters in `rvm/`, `sam2/`, `matanyone/`, `hybrid/`. |
-| `app/tracking` | Subject selection (`subject`, `auto_detect`, `text_grounding`), subject isolation (`component_tracker`), tracking health (`monitor`). |
+| `app/tracking` | Subject selection (`subject`, `auto_detect`, `text_grounding`), subject isolation (`component_tracker`), tracking health (`monitor`), rigid motion and the one outline of a clip (`rigid`). |
 | `app/refinement` | Matte refinement operators (`ops`), temporal filtering (`temporal`), the configurable `refiner`, foreground colour estimation (`foreground`). |
 | `app/compositing` | Colour conversion (`colors`) and native-domain compositing (`compositor`). |
 | `app/encoding` | FFmpeg discovery (`ffmpeg`), codec profiles (`profiles`), the timestamp-exact encoder (`nut_pipe`), audio/metadata mux (`muxer`), extra deliverables (`sinks`). |
@@ -111,6 +111,9 @@ See `app/models/base.py` for the binding contract. Summary:
   Output: `MatteOutput.alpha` at the same size, plus optional per-frame `presence`.
 * A sequence starts at the subject's reference frame. Backward tracking is a second sequence with
   `reverse=True`.
+* A model with `capabilities.two_pass` decides with the whole clip in view: the pipeline runs it
+  over every frame into the matte cache first (sequences announced with `will_revise`), calls
+  `revise(indices, load, save)` once, and only then renders, entirely from the cache.
 * `process` is retry-safe (state unchanged if it raises).
 * Capabilities drive the pipeline: `alpha_type` (`alpha` = true matte, `mask` = needs mask-to-alpha
   refinement), `native_prompts`, `needs_initial_mask`, `tracks_single_subject`, `max_batch_size`.
@@ -146,6 +149,10 @@ file and of every setting that influences the raw matte. Consequences:
   the model is not run again.
 * **Backward tracking**: mattes for frames before the reference frame are produced by a reverse pass
   and read back from the store during the forward render.
+* **Two-pass models**: every matte goes through the store, the model revises them there, and a
+  marker records that the revision happened. Without the marker (an interrupted run) the store is
+  emptied and the run starts again: raw mattes cannot be revised later, because what the model
+  noted about the clip is gone with the process.
 
 The live path quantises the raw matte exactly like the store, so resumed and uninterrupted runs
 render identically from the same mattes.

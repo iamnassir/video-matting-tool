@@ -147,6 +147,9 @@ class MatAnyoneAdapter(MattingModel):
         self._max_mem = max(2, int(self.options.get("max_mem_frames", 5)))
         forced = self.options.get("internal_short_side")
         self._forced_side: Optional[int] = int(forced) if forced not in (None, "", "auto") else None
+        #: GPU memory to leave for another network that runs alongside (set by the hybrid adapter)
+        self._reserve_mb = max(0.0, float(self.options.get("reserve_vram_mb", 0.0) or 0.0))
+        self._free_at_choice: Optional[int] = None       # free GPU memory (MB) the working size was chosen from
         self._side = 0                                   # current internal short side
         self._size = (0, 0)                              # (height, width) of the sequence
         self._seed: Optional[np.ndarray] = None          # prepared mask (0 / 255) for the next initialisation
@@ -184,32 +187,48 @@ class MatAnyoneAdapter(MattingModel):
         try:
             from ...core.hardware import cuda_index, gpu_stats
 
+            # Memory this process holds in PyTorch's cache without using it is available as well: after
+            # a first pass over the clip that is most of what the device reports as used.
+            cached = max(0, torch.cuda.memory_reserved(self.device) - torch.cuda.memory_allocated(self.device))
+            cached_mb = cached / (1024.0 * 1024.0)
             stats = gpu_stats(cuda_index(self.device))
             if stats["gpu_memory_total_mb"] and stats["gpu_memory_used_mb"] is not None:
-                return float(stats["gpu_memory_total_mb"] - stats["gpu_memory_used_mb"])
+                return float(stats["gpu_memory_total_mb"] - stats["gpu_memory_used_mb"]) + cached_mb
             free, _ = torch.cuda.mem_get_info(self.device)
-            return free / (1024.0 * 1024.0)
+            return free / (1024.0 * 1024.0) + cached_mb
         except Exception:
             return None
 
     def _choose_side(self, height: int, width: int, hint: Optional[int]) -> int:
-        """Internal short side: forced by option, else from the free GPU memory (measured on an
-        RTX 3060 in half precision: about 0.6 GB at 432, 1.1 GB at 576, 1.7 GB at 720)."""
+        """Internal short side: forced by option, else from the free GPU memory.
+
+        Working memory beyond the weights, measured on an RTX 3060 in half precision: about 0.45 GB
+        at 432, 0.8 GB at 576 and 1.25 GB at 720 (1.8 GB at 864 and 2.8 GB at 1080 by the same
+        square law).  A size is chosen when it needs at most about 60 % of what is free at this
+        moment (the weights are loaded by then): the edge of the matte is only as fine as this
+        size, so a larger one is worth having, and if memory runs out the adapter steps down.
+        """
 
         shortest = min(height, width)
+        self._free_at_choice = None
         if self._forced_side is not None:
             return max(_FLOOR, min(self._forced_side, shortest))
         if self.device.type != "cuda":
             side = 432                                       # the CPU path is slow: keep it small
         else:
             free = self._free_vram_mb()
-            if free is None or free >= 9000:
+            if free is not None:
+                free -= self._reserve_mb
+                self._free_at_choice = round(free)
+            if free is None or free >= 4700:
                 side = 1080
-            elif free >= 4500:
+            elif free >= 3000:
+                side = 864
+            elif free >= 2100:
                 side = 720
-            elif free >= 2600:
+            elif free >= 1350:
                 side = 576
-            elif free >= 1600:
+            elif free >= 900:
                 side = 480
             else:
                 side = 432
@@ -238,10 +257,13 @@ class MatAnyoneAdapter(MattingModel):
         if not seed.any():
             raise SubjectError("The subject mask is empty.", hint="Select the subject on a frame where it is visible.")
         self._drop_core()
+        # One working size per clip: the passes forwards and backwards from the reference frame must
+        # not differ in sharpness.  A size that was reduced for lack of memory stays reduced.
+        if not (self._side and self._size == (height, width)):
+            self._side = self._choose_side(height, width, seq.inference_max_side)
         self._size = (height, width)
         self._seed = seed
         self._last_alpha = None
-        self._side = self._choose_side(height, width, seq.inference_max_side)
 
     def end_sequence(self) -> None:
         self._drop_core()
@@ -318,7 +340,8 @@ class MatAnyoneAdapter(MattingModel):
     def runtime_summary(self) -> Dict[str, Any]:
         summary = super().runtime_summary()
         summary["options"].pop("quality", None)
-        summary.update({"internal_short_side": self._side or None, "n_warmup": self._warmup,
+        summary.update({"internal_short_side": self._side or None, "vram_free_when_chosen_mb": self._free_at_choice,
+                        "n_warmup": self._warmup,
                         "mem_every": self._mem_every, "max_mem_frames": self._max_mem,
                         "autocast": "float16" if self._amp else "off"})
         return summary

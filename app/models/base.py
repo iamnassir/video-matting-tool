@@ -130,6 +130,9 @@ class ModelCapabilities:
     supports_reverse: bool = True
     #: follows one selected subject and ignores other people / objects
     tracks_single_subject: bool = False
+    #: the model looks at the whole clip before its mattes are final: the pipeline runs it over
+    #: every frame first, then calls :meth:`MattingModel.revise`, and only then renders
+    two_pass: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -143,6 +146,7 @@ class ModelCapabilities:
             "devices": sorted(self.devices),
             "supports_reverse": self.supports_reverse,
             "tracks_single_subject": self.tracks_single_subject,
+            "two_pass": self.two_pass,
         }
 
 
@@ -219,6 +223,8 @@ class SequenceInfo:
     reverse: bool = False                    # frames arrive in descending index order
     subject: Optional[ResolvedSubject] = None
     inference_max_side: Optional[int] = None  # quality-preset hint: cap for internal working resolution
+    #: True when the caller will call ``revise()`` after all sequences of the clip (two-pass models)
+    will_revise: bool = False
 
 
 @dataclass
@@ -297,6 +303,15 @@ class MattingModel(ABC):
         """Switch to a cheaper configuration after OOM at batch size 1. Default: not possible."""
 
         return False
+
+    def revise(self, indices: Sequence[int], load: Any, save: Any, check: Optional[Any] = None) -> None:
+        """Two-pass models (``capabilities.two_pass``): improve the mattes with knowledge of the whole clip.
+
+        Called once after every frame was processed in sequences announced with ``will_revise``.
+        ``load(index)`` returns the matte of a frame as float32 ``[H, W]`` in 0..1 (what
+        :meth:`process` returned for it), ``save(index, matte)`` replaces it; ``check()``, when given,
+        raises if the job was cancelled and should be called now and then.  Default: nothing.
+        """
 
     def unload(self) -> None:
         """Free the model. Subclasses should drop references then call ``super().unload()``."""

@@ -7,7 +7,7 @@ chroma green (`#00FF00`), another solid colour, or transparency, while preservin
 needs to be untouched: resolution, orientation, every frame and its timestamp, duration, colour
 tags, bit depth and the original audio.
 
-It has a command line, a local web interface, and a model layer with four interchangeable models.
+It has a command line, a local web interface, and a model layer with five interchangeable models.
 
 ```
 python main.py process --input input.mp4 --output output_green.mp4 --model rvm --background green --device cuda --quality high
@@ -34,7 +34,8 @@ Linux, macOS, optional models and manual steps: [docs/INSTALL.md](docs/INSTALL.m
 ## What it does
 
 * **Models** (adapters behind one interface, see [docs/MODELS.md](docs/MODELS.md)):
-  Robust Video Matting, SAM 2.1, a SAM 2 + RVM hybrid, MatAnyone / MatAnyone 2, and plugins.
+  Robust Video Matting, SAM 2.1, a SAM 2 + RVM hybrid, MatAnyone / MatAnyone 2, a SAM 2 + MatAnyone
+  hybrid for objects with see-through parts (a car with its windows), and plugins.
   Weights come only from the official sources, are pinned by SHA-256 and are downloaded only on
   request. Licences are enforced (`--commercial` refuses non-commercial models).
 * **Subject selection**: automatic, clicks (positive / negative), box, mask image, text description,
@@ -80,6 +81,7 @@ PyTorch 2.5.1, FFmpeg 8.1) with real footage:
 | SAM 2.1 small, selected child through an occlusion | about 8 fps, 0.7 GB VRAM |
 | SAM 2 + RVM, one of two people who touch | 6-7.5 fps, only the selected person kept |
 | MatAnyone 2, 720p, official sample | 10-12 fps inference; only the selected person, soft hair |
+| SAM 2 + MatAnyone, car with driver, 2046x1080, 241 frames | 3 fps (two networks, whole clip analysed first); one steady outline, windows open, a van overtaking behind the car kept out |
 | Awkward inputs | rotated and mirrored phone clips, 4K variable frame rate, 10-bit HLG Dolby Vision MOV, 1080p60, vertical video, clips with edit lists: all hard checks pass |
 
 Every run prints this kind of table and writes it to `<output>.report.json`:
@@ -101,6 +103,11 @@ Every run prints this kind of table and writes it to `<output>.report.json`:
   colour to `#00FF00` can decode as `#00FF01`.
 * **Model limits** are listed per model in [docs/MODELS.md](docs/MODELS.md): RVM mattes all people
   and only people; SAM 2 produces masks, not hair-level alpha; MatAnyone is non-commercial.
+* **Matte quality is not checked automatically.** The checks after every run cover timing, audio,
+  colours and that a subject is present; whether the matte *looks* right (an edge that wobbles, a
+  passing object that was kept) only shows when you watch the result.
+* **Seen through an opening**: with `sam2_matanyone`, something that passes behind a window of the
+  subject can stay visible for some frames.
 * **SAM2Matting** was evaluated and not integrated (licence and dependency conflicts); `sam2_rvm`
   and `matanyone` cover the use case.
 * **Text prompts** return a best guess even for phrases that match nothing; preview the selection.
@@ -147,12 +154,13 @@ python -m pytest
 
 Tests that need model weights, a GPU, real footage or a browser skip themselves when those are not
 available. On the development machine, with everything installed, the whole suite
-(737 tests, 5 minutes) passes.
+(762 tests, 6 minutes) passes.
 
 Every change is also installed and tested on clean machines by GitHub Actions
 (`.github/workflows/tests.yml`): Windows with `install.bat` on Python 3.10 and 3.12, and Linux with
-the manual steps, all without a graphics card (725 tests pass, 12 skip for lack of a GPU or of the
-downloadable test footage), followed by a complete run with the default model.
+the manual steps, all without a graphics card (every test that needs neither a GPU nor the
+downloadable test footage runs there, the others skip), followed by a complete run with the
+default model.
 
 ## Licence notes
 

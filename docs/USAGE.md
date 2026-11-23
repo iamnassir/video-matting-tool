@@ -28,6 +28,10 @@ python main.py process -i in.mp4 -o out.mp4 --model matanyone --subject "mask:fi
 # the frame it was made from is found automatically
 python main.py process -i in.mp4 -o out.mp4 --model matanyone --subject "mask:wanted_look.jpg"
 
+# A car with its driver, everything else green - also what is seen through the windows
+# (the mask is a still with the car cut out and the windows cut open)
+python main.py process -i car.mp4 -o car_green.mp4 --model sam2_matanyone --subject "mask:car_cutout.jpg"
+
 # Other backgrounds
 python main.py process -i in.mp4 -o out_blue.mp4 --background blue
 python main.py process -i in.mp4 -o out.mp4 --background custom --background-color "#1E90FF"
@@ -67,9 +71,11 @@ the picture does not line up.
 
 Paths can be pasted the way Windows gives them (`"C:\Users\me\Downloads\mask.png"`, quotes included).
 
-Which model for a mask: `matanyone` keeps see-through parts of the subject (car windows, gaps between
-arm and body) because it works per pixel; `sam2` follows the object as a whole and fills such
-openings in again after the reference frame.
+Which model for a mask: for an object with see-through parts (car windows, the gaps of a chair)
+choose `sam2_matanyone`: it holds the outline as one steady shape and keeps the openings open. For
+a person, `matanyone` (it also keeps the gap between arm and body). `sam2` alone follows the
+object as a whole and fills openings in again after the reference frame. A dark line along the
+border of a cut-out picture, as image tools sometimes leave it, is ignored.
 
 ### Matte refinement
 

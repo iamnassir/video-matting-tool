@@ -158,7 +158,7 @@ const STAGE_LABELS = {
   probe: 'Analysing the input',
   subject: 'Identifying the subject',
   model_load: 'Loading the model',
-  backtrack: 'Tracking back to the first frame',
+  backtrack: 'Following the subject',
   render: 'Matting and compositing',
   mux: 'Adding audio and metadata',
   export: 'Writing the deliverables',

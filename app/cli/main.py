@@ -254,7 +254,7 @@ def process(
     output_directory: Optional[Path] = typer.Option(None, "--output-directory", "-d", help="Folder for the outputs of a batch: <input name>_<background>.<ext>."),
     recursive: bool = typer.Option(False, "--recursive", help="Search input folders recursively."),
     # model / device
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="Model: rvm | sam2 | matanyone | sam2_rvm (see 'models list')."),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="Model: rvm | sam2 | matanyone | sam2_rvm | sam2_matanyone (see 'models list')."),
     variant: Optional[str] = typer.Option(None, "--variant", help="Model variant (default: chosen by --quality)."),
     quality: Optional[str] = typer.Option(None, "--quality", help="Quality preset: fast | balanced | high | max."),
     device: Optional[str] = typer.Option(None, "--device", help="Inference device: auto | cuda | cuda:N | mps | cpu."),

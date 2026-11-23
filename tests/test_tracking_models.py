@@ -34,7 +34,7 @@ GIRL_BOX = (308.0, 0.0, 518.0, 398.0)
 
 def test_registered_models_and_licences():
     ids = {info.id for info in registry.list_model_infos(load_settings())}
-    assert {"rvm", "sam2", "sam2_rvm", "matanyone"} <= ids
+    assert {"rvm", "sam2", "sam2_rvm", "matanyone", "sam2_matanyone"} <= ids
     sam2 = registry.get_model_info("sam2")
     assert sam2.license.commercial_use == "allowed" and sam2.capabilities.alpha_type == "mask"
     assert sam2.capabilities.tracks_single_subject and {"points", "box", "mask"} <= set(sam2.capabilities.native_prompts)
@@ -51,7 +51,12 @@ def test_registered_models_and_licences():
         for w in variant.weights:
             assert w.url.startswith("https://github.com/pq-yang/MatAnyone")
             assert w.sha256 and len(w.sha256) == 64 and w.size_bytes
-    for info in (sam2, hybrid, mat):
+    outline = registry.get_model_info("sam2_matanyone")
+    assert outline.depends_on == ("sam2", "matanyone") and all(not v.weights for v in outline.variants)
+    assert outline.license.commercial_use == "prohibited"            # the stricter component governs
+    assert outline.capabilities.two_pass and outline.capabilities.needs_initial_mask
+    assert outline.capabilities.subject_domain == "any" and not sam2.capabilities.two_pass
+    for info in (sam2, hybrid, mat, outline):
         assert info.limitations and info.install_hint
 
 
@@ -263,3 +268,85 @@ def test_subject_selection_backends():
         selector.close()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+
+
+def test_matanyone_working_size_follows_the_free_memory(tmp_path, monkeypatch):
+    from app.models.matanyone.adapter import MatAnyoneAdapter
+
+    def adapter(device="cuda", **options):
+        return MatAnyoneAdapter(variant=None, device=torch.device(device), precision="fp16", weights_dir=tmp_path,
+                                options=options)
+
+    model = adapter()
+    for free, side in ((9000, 1080), (4800, 1080), (3200, 864), (2200, 720), (1500, 576), (1000, 480), (300, 432)):
+        monkeypatch.setattr(model, "_free_vram_mb", lambda free=free: float(free))
+        assert model._choose_side(2160, 3840, None) == side, free
+    monkeypatch.setattr(model, "_free_vram_mb", lambda: 9000.0)
+    assert model._choose_side(720, 1280, None) == 720              # never above the source
+    assert model._choose_side(2160, 3840, 1280) == 720             # the quality preset caps the long side
+    monkeypatch.setattr(model, "_free_vram_mb", lambda: None)
+    assert model._choose_side(2160, 3840, None) == 1080            # unknown: assume there is room
+    # Memory set aside for a network that runs alongside (the SAM 2 + MatAnyone hybrid).
+    shared = adapter(reserve_vram_mb=600)
+    monkeypatch.setattr(shared, "_free_vram_mb", lambda: 2500.0)
+    assert shared._choose_side(1080, 1920, None) == 576 and shared.runtime_summary()["vram_free_when_chosen_mb"] == 1900
+    assert adapter(internal_short_side=864)._choose_side(1080, 1920, None) == 864
+    assert adapter(internal_short_side=4000)._choose_side(1080, 1920, None) == 1080
+    assert adapter("cpu")._choose_side(1080, 1920, None) == 432
+
+
+@pytest.mark.gpu
+@pytest.mark.models
+def test_outline_hybrid_runs_frame_by_frame_and_revises_a_clip():
+    """SAM 2 + MatAnyone on real footage: single pass, and the two passes with the revision."""
+
+    settings = _need("sam2_matanyone")
+    frames = _frames(JOKER, 10)
+    h, w = frames[0].shape[:2]
+    mask = _mask_image(JOKER_MASK, h, w)
+    model = _create("sam2_matanyone", settings, options={"n_warmup": 4})
+    try:
+        with pytest.raises(SubjectError):
+            model.start_sequence(SequenceInfo(width=w, height=h, fps=30.0, subject=ResolvedSubject(frame_index=0, box=(0, 0, 9, 9))))
+        subject = ResolvedSubject(frame_index=0, mask=mask, source="test:mask")
+
+        # 1. frame by frame: the matte never leaves SAM 2's outline (plus the soft margin)
+        outputs = _run(model, frames, subject, model.device)
+        for out in outputs:
+            assert not out.is_mask and out.alpha.shape == (1, 1, h, w) and out.alpha.dtype == torch.float32
+            assert out.presence is not None
+        assert _iou(outputs[0].alpha[0, 0].cpu().numpy(), mask) > 0.9
+        assert _iou(outputs[-1].alpha[0, 0].cpu().numpy(), mask) > 0.6
+        summary = model.runtime_summary()
+        assert summary["sam2"]["working_size"] and summary["matanyone"]["internal_short_side"]
+        assert summary["rigid_outline"]["used"] is False
+
+        # 2. the whole clip: raw mattes first, then the revision
+        raw = _run(model, frames, subject, model.device, will_revise=True)
+        store = {i: out.alpha[0, 0].cpu().numpy().copy() for i, out in enumerate(raw)}
+        saved = {}
+        model.revise(list(store), lambda i: store[i], lambda i, matte: saved.__setitem__(i, matte))
+        assert sorted(saved) == list(range(len(frames)))
+        report = model.runtime_summary()["rigid_outline"]
+        assert report["frames"] == len(frames) and report["frames_followed"] >= 1
+        for i, matte in saved.items():
+            assert matte.shape == (h, w) and matte.dtype == np.float32
+            assert 0.0 <= float(matte.min()) and float(matte.max()) <= 1.0
+            assert _iou(matte, outputs[i].alpha[0, 0].cpu().numpy()) > 0.9      # close to the frame-by-frame result
+        # A second revision has nothing left to work on.
+        again = {}
+        model.revise(list(store), lambda i: store[i], lambda i, matte: again.__setitem__(i, matte))
+        assert again == {}
+
+        # 3. forced off: the frame-by-frame outlines are used
+        off = _create("sam2_matanyone", settings, options={"n_warmup": 4, "rigid_outline": "off"})
+        try:
+            raw = _run(off, frames[:4], subject, off.device, will_revise=True)
+            kept = {}
+            off.revise(range(4), lambda i: raw[i].alpha[0, 0].cpu().numpy(), lambda i, matte: kept.__setitem__(i, matte))
+            assert len(kept) == 4 and off.runtime_summary()["rigid_outline"] == {
+                "mode": "off", "used": False, "frames": 4, "frames_followed": 0, "frames_with_the_one_outline": 0}
+        finally:
+            off.unload()
+    finally:
+        model.unload()

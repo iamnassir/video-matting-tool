@@ -137,6 +137,29 @@ def _to_8bit(img: np.ndarray) -> np.ndarray:
     return np.clip(img.astype(np.float32) * (255.0 / _unit_scale(img)), 0, 255).astype(np.uint8)
 
 
+def _drop_hairlines(mask: np.ndarray) -> np.ndarray:
+    """Remove parts of a cut-out mask that are only a few pixels thick and stand alone.
+
+    Pictures made by image tools often carry a dark line along one border or a stray speck; such
+    a part is not the background colour, so it would count as subject.  A part is removed when
+    nothing of it survives an erosion by three pixels (the frame border counts as background).
+    """
+
+    binary = (mask > 0.5).astype(np.uint8)
+    core = cv2.erode(binary, np.ones((7, 7), np.uint8), borderType=cv2.BORDER_CONSTANT, borderValue=0)
+    count, labels = cv2.connectedComponents(binary, connectivity=8)
+    if count <= 1:
+        return mask
+    keep = np.zeros(count, bool)
+    keep[np.unique(labels[core > 0])] = True
+    thin = (binary > 0) & ~keep[labels]
+    if not thin.any():
+        return mask
+    out = mask.copy()
+    out[cv2.dilate(thin.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0] = 0.0   # with its soft edge
+    return out
+
+
 def _mask_from_cutout(bgr: np.ndarray, name: str) -> Tuple[np.ndarray, str]:
     """Mask of a colour cut-out: everything that is not the uniform background colour.
 
@@ -173,6 +196,7 @@ def _mask_from_cutout(bgr: np.ndarray, name: str) -> Tuple[np.ndarray, str]:
     low, high = 0.3 * strength, 0.55 * strength
     mask = np.clip((dist - low) / max(high - low, 1e-3), 0.0, 1.0)
     mask = cv2.medianBlur((mask * 255.0 + 0.5).astype(np.uint8), 5).astype(np.float32) / 255.0   # compression specks
+    mask = _drop_hairlines(mask)
     colour = "#{:02X}{:02X}{:02X}".format(int(round(key_bgr[2])), int(round(key_bgr[1])), int(round(key_bgr[0])))
     note = (
         f"The mask image is a colour picture on a uniform {colour} background, so everything that is not "
@@ -430,13 +454,20 @@ class SubjectSelector:
                         "different from the video there. A mask has to show the reference frame, so move the "
                         "reference frame to the frame the picture was made from."
                     )
-            if caps is not None and caps.alpha_type == "mask":
+            if caps is not None and model_info is not None and model_info.id != "sam2_matanyone":
                 openings = enclosed_openings(mask)
-                if openings >= 0.03:
+                if openings >= 0.03 and caps.alpha_type == "mask":
                     mask_notes.append(
                         f"The mask has see-through openings ({100.0 * openings:.0f} % of the area inside its outline). "
                         f"{model_info.name} follows an object as a whole and closes such openings again in the "
-                        "frames after the reference frame. The MatAnyone model works per pixel and keeps them."
+                        "frames after the reference frame. The 'SAM 2 + MatAnyone' model (sam2_matanyone) keeps them."
+                    )
+                elif openings >= 0.03 and caps.subject_domain == "human":
+                    mask_notes.append(
+                        f"The mask has see-through openings ({100.0 * openings:.0f} % of the area inside its outline). "
+                        f"{model_info.name} was made for people. For an object with openings - a car, a piece of "
+                        "furniture - the 'SAM 2 + MatAnyone' model (sam2_matanyone) holds the outline steady and "
+                        "keeps out what passes behind."
                     )
             covered = float((mask > 0.5).mean())
             if covered <= 0.0:

@@ -137,6 +137,7 @@ export function capabilityFacts(model, { extended = false } = {}) {
     );
     if (caps.needs_initial_mask) facts.push(fact('Start', 'Needs a mask of the subject', 'A helper model turns your selection (or the automatic detection) into a mask on the reference frame.'));
     if (caps.supports_reverse === false) facts.push(fact('Backward tracking', 'not supported', 'Frames before the reference frame of the subject cannot be matted.'));
+    if (caps.two_pass) facts.push(fact('Order of work', 'Analyses the whole clip first', 'The first frame is written only after every frame was analysed; an interrupted job starts again.'));
   }
   return h('div', { class: 'mfacts', testid: 'model-facts' }, facts);
 }

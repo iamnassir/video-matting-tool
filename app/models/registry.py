@@ -42,6 +42,7 @@ BUILTIN_ADAPTER_MODULES: Tuple[str, ...] = (
     "app.models.sam2.adapter",
     "app.models.matanyone.adapter",
     "app.models.hybrid.adapter",
+    "app.models.hybrid.outline",
     "app.tracking.backends",       # registers the auxiliary subject-selection models
 )
 

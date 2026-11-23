@@ -77,6 +77,8 @@ python main.py models download detector --accept-license    # automatic subject 
 
 python scripts/install_models.py matanyone --accept-license     # non-commercial licence
 python main.py models download matanyone --accept-license
+# with both sam2 and matanyone installed, the model for objects with openings is ready too:
+#   --model sam2_matanyone   (a car with its windows; nothing more to download)
 
 python scripts/install_models.py text                # text prompts
 python main.py models download text_grounding

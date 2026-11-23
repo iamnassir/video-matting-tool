@@ -26,6 +26,7 @@ Weights are stored in `models/<model id>/`. Mirrors or pinned copies can be conf
 | `sam2`      | Follows **any one object** you select | box, clicks, mask, text, automatic | mask, softened by the refinement stage | Apache-2.0 (commercial use allowed) | about 8 fps |
 | `sam2_rvm`  | Follows **one selected person** and gives a soft matte | as `sam2` | true soft alpha, gated by the SAM 2 track | GPL-3.0 + Apache-2.0 (conditional) | 6-7.5 fps |
 | `matanyone` | Follows **one selected person**, best hair and motion blur | mask on the reference frame (boxes, clicks, text and auto are converted with the helper models) | true soft alpha | NTU S-Lab 1.0 (**non-commercial only**) | 10-12 fps at 720p |
+| `sam2_matanyone` | Follows **one object with see-through parts** (a car with its windows) | mask on the reference frame with the openings cut out | steady outline, openings stay open | NTU S-Lab 1.0 + Apache-2.0 (**non-commercial only**) | 3 fps at 1080p; the whole clip is analysed before the first frame is written |
 
 Rules of thumb:
 
@@ -34,17 +35,24 @@ Rules of thumb:
 * A subject that is not a person (product, animal, vehicle): `sam2`.
 * Best possible matte for a person, non-commercial work: `matanyone`.
 * A subject with see-through parts that must become background (a car with its windows, a person
-  inside a vehicle): `matanyone` with a mask image that has those parts cut out. Measured on a
-  2046x1080 side shot of a moving car with driver: `matanyone` kept all window openings transparent
-  over 241 frames; `sam2` with the same mask kept the car but closed the windows again. Both models
-  also kept other vehicles while they passed directly behind the roof line.
+  inside a vehicle): `sam2_matanyone` with a mask image that has those parts cut out. Measured on
+  a 2046x1080 side shot of a moving car with driver (241 frames, a van overtaking behind it, a
+  white roof against a white sky):
+  * `sam2` alone kept the car but closed the windows again, and for 20 frames took the van as
+    part of the car;
+  * `matanyone` alone kept the windows open, but its roof edge wandered from frame to frame, it
+    lost the windscreen opening in the first half of the clip and it kept passing vehicles;
+  * `sam2_matanyone` gave one steady outline for all 241 frames, open windows and no vehicle
+    outside the car. What passes *behind a window* (the van seen through the windscreen) can still
+    show for some frames.
 
 ## Licences and commercial use
 
 Licences are part of each adapter's metadata and are enforced, not just documented:
 
 * `--commercial` (or `commercial_use: true` in the settings, or `VMT_COMMERCIAL_USE=1`) makes the
-  tool **refuse** models whose licence forbids commercial use (`matanyone`) with exit code 1.
+  tool **refuse** models whose licence forbids commercial use (`matanyone`, `sam2_matanyone`) with
+  exit code 1.
 * Models with conditions (`rvm`, `sam2_rvm`, the detector) run, and the condition is written into
   the processing report as a warning.
 
@@ -82,6 +90,41 @@ Runs both networks on every frame: `alpha = RVM alpha x (SAM 2 mask, grown and s
 of the selected subject that RVM missed fall back to the SAM 2 mask (`-O fill_from_mask=false`
 switches that off). Needs the `sam2` package and the weights of both models. People only.
 
+## SAM 2 + MatAnyone for objects with openings (`sam2_matanyone`)
+
+For a rigid thing you can see through in places. Needs the packages and weights of `sam2` and
+`matanyone` (nothing else to download) and a mask on the reference frame in which the openings
+are cut out; a still of the wanted result on flat green works as that mask.
+
+How it works:
+
+* SAM 2 follows the *solid* outline of the selection (every opening filled), MatAnyone the
+  selection as it is. The result is MatAnyone's matte inside SAM 2's outline: the outline from the
+  model that sees objects, the openings from the model that decides pixel by pixel.
+* In a rim along the outline (`-O rim_depth=44`, pixels at 1080p) everything is made opaque,
+  except an opening that reaches deeper than the rim. That repairs the pieces MatAnyone drops
+  where the object has the colour of the background (a white roof against a white sky).
+  `-O restore_rim=false` switches it off.
+* **One outline for the whole clip.** A rigid object does not change its shape, it only moves.
+  The tool measures that motion on every frame (corner features on the object, affine fit,
+  re-measured against the reference frame so that errors do not add up) and, when the clip has
+  been seen completely, lays all SAM 2 outlines on top of each other in the object's own
+  coordinates and takes the majority. A van that is behind the car for twenty frames out of two
+  hundred is outvoted; parts of the object that enter the picture later are covered too. Inside
+  the reference frame the outline you gave is used as it is.
+* This needs the whole clip, so the model runs over every frame first and rendering starts
+  afterwards (a two-pass model: an interrupted run starts again instead of resuming).
+
+Options (`-O key=value`): `rigid_outline=auto|on|off` (auto uses the one outline when it agrees
+with the frame-by-frame outlines to 93 % or more, `rigid_agreement`; the report states the
+agreement under `model.runtime.rigid_outline`), `outline_choke=2` (pixels by which that outline
+is drawn in), `gate_margin=4`, `internal_short_side` (passed on to MatAnyone).
+
+Limitations: the outline is hard (no hair detail: use `matanyone` or `sam2_rvm` for people);
+something that passes behind an opening is judged by MatAnyone alone and can stay visible for
+some frames; a subject that changes its shape gets frame-by-frame outlines, which can still be
+fooled by a similar object directly behind it; non-commercial licence.
+
 ## MatAnyone / MatAnyone 2 (`matanyone`)
 
 * Source: github.com/pq-yang/MatAnyone (pinned commit) and the official v1.0.0 release files of
@@ -91,9 +134,11 @@ switches that off). Needs the `sam2` package and the weights of both models. Peo
 * Needs a mask on the reference frame. `--subject mask:<file>` uses yours; box, click, text and
   automatic selection are turned into that mask by SAM 2 and the detector, which must then be installed.
 * Memory grows with the square of the frame size, so frames are analysed at a reduced internal
-  resolution chosen from the GPU memory that is really free (short side 432-1080) and the matte is
-  returned at full size. `-O internal_short_side=720` forces a value. On out-of-memory the adapter
-  steps down and continues from its last matte.
+  resolution chosen from the GPU memory that is really free (short side 432-1080: 720 needs about
+  1.3 GB beyond the weights and is chosen from 2.1 GB free) and the matte is returned at full size.
+  The report states the size used (`model.runtime.internal_short_side`); the edge of the matte is
+  only as fine as this size. `-O internal_short_side=720` forces a value. On out-of-memory the
+  adapter steps down and continues from its last matte.
 * The network is built without Hydra and without any download; the upstream default would fetch
   ImageNet backbones into the user profile.
 
